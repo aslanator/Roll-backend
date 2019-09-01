@@ -8,7 +8,7 @@ type PathLike = string | Buffer | URL;
 
 function readdir(path:PathLike,
                  options: { encoding: BufferEncoding | null; withFileTypes?: false } | BufferEncoding | undefined | null,
-                 ){
+                 callback: (err: NodeJS.ErrnoException | null, files: string[]) => void, ){
     return '124';
 }
 

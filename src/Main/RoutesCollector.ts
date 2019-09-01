@@ -1,8 +1,5 @@
 import Router from 'koa-router';
-import fs from 'fs';
-import util from 'util';
-
-const readdir = util.promisify(fs.readdir);
+import {readdir} from './Utils/PromisifyFS';
 
 export default class RoutesCollector {
 
@@ -78,7 +75,7 @@ export default class RoutesCollector {
     private async getFolderFiles(routesFolder:string):Promise<Array<string>>{
         try{
             let files = await readdir(routesFolder);
-            return files;
+            return files.filter(file => /\.ts$/.test(file));
         }
         catch(error){
             console.error(`${error.message}  \n ${error.stack}`);
