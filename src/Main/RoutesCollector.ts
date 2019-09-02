@@ -67,9 +67,9 @@ export default class RoutesCollector {
 
     private filterRoutesFolder(folders:Array<string>):string{
         for(let folder of folders)
-            if(/routes\/$/.test(folder))
+            if(/routes\/?$/i.test(folder))
                 return folder;
-            return '';
+        return '';
     }
 
     private async getFolderFiles(routesFolder:string):Promise<Array<string>>{

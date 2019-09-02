@@ -60,12 +60,27 @@ promisifyFS.readdir = jest.fn((path:PathLike,
 
 test('getFolderFiles', async function(){
     let testRoutesCollector = new (RoutesCollector as any);
-    expect(await testRoutesCollector.getFolderFiles('')).toStrictEqual([]);
-    expect(await testRoutesCollector.getFolderFiles('/home/app/modules/')).toStrictEqual([]);
-    expect(await testRoutesCollector.getFolderFiles('/home/app/modules/auth/controllers')).toStrictEqual(['Index.ts', 'Something.ts']);
+    let args = '';
+    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual([]);
+    expect(promisifyFS.readdir).lastCalledWith(args);
+    args = '/home/app/modules/';
+    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual([]);
+    expect(promisifyFS.readdir).lastCalledWith(args);
+    args = '/home/app/modules/auth/controllers';
+    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual(['Index.ts', 'Something.ts']);
+    expect(promisifyFS.readdir).lastCalledWith(args);
+    args = '/home/app/modules/routes/';
+    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual(['RootRoute.ts']);
+    expect(promisifyFS.readdir).lastCalledWith(args);
+
+    expect(promisifyFS.readdir.mock.calls.length).toBe(4);
 });
 
 
-test('getFolderFiles', async function(){
-    
+test('filterRoutesFolder', async function(){
+    let testRoutesCollector = new (RoutesCollector as any);
+    expect(await testRoutesCollector.filterRoutesFolder([])).toStrictEqual('');
+    expect(await testRoutesCollector.filterRoutesFolder(['routes'])).toStrictEqual('routes');
+    expect(await testRoutesCollector.filterRoutesFolder(['test', 'Routes'])).toStrictEqual('Routes');
+    expect(await testRoutesCollector.filterRoutesFolder(['Route'])).toStrictEqual('');
 });
