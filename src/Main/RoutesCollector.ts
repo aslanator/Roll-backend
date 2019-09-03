@@ -21,6 +21,9 @@ export default class RoutesCollector {
         return this.instance;
     }
 
+    /**
+     * Replace constructor because constructor cannot be async
+     */
     private async init(){
         try{
             let routesFiles = await this.routesFilesFinder();
@@ -29,7 +32,6 @@ export default class RoutesCollector {
         catch(error){
             console.error(error.name + '' + error.message);
         }
-
     }
 
     private async routesFilesFinder(currentPaths:Array<string> = [__dirname + "/../Modules/"]): Promise<Array<string>>{
@@ -75,6 +77,7 @@ export default class RoutesCollector {
     private async getFolderFiles(routesFolder:string):Promise<Array<string>>{
         try{
             let files = await readdir(routesFolder);
+            files = files.map(file => routesFolder + file);
             return files.filter(file => /\.ts$/.test(file));
         }
         catch(error){

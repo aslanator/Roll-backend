@@ -1,62 +1,5 @@
-import {URL} from "url";
 import RoutesCollector from "../../src/Main/RoutesCollector";
-type PathLike = string | Buffer | URL;
-type folderStructure = {[key: string]: folderStructure | null};
-
-const virtualStructure:folderStructure = {
-  "home": {
-      "app": {
-          "modules": {
-              "auth" : {
-                  "controllers": {
-                      "Index.ts" : null,
-                      "Something.ts": null
-                  },
-                  "models": {
-                      "Any.ts": null
-                  },
-                  "routes": {
-                      "AuthRoute.ts": null,
-                      "UserRoutes.ts": null
-                  }
-              },
-              "some" : {
-                  "controllers": {
-                      "Index1.ts" : null,
-                      "Something1.ts": null
-                  },
-                  "models": {
-                      "Any1.ts": null
-                  },
-              },
-              "routes": {
-                  "RootRoute.ts": null
-              }
-          }
-      }
-  }
-};
-const promisifyFS = require.requireActual('../../src/Main/Utils/PromisifyFS');
-
-promisifyFS.readdir = jest.fn((path:PathLike,
-                       options?: { encoding: BufferEncoding | null; withFileTypes?: false } | BufferEncoding | undefined | null,): Promise<Array<string> | null> => {
-    if(path instanceof Buffer || path instanceof  URL)
-        path = path.toString();
-    let arrayPath:Array<string> = path.split('/').filter(Boolean);
-    let structure:folderStructure = virtualStructure;
-    for(let pathPart of arrayPath){
-        if(pathPart in structure){
-            let newStructureLevel:folderStructure | null = structure[pathPart];
-            if(newStructureLevel === null)
-                return new Promise(resolve => resolve(Object.keys(structure)));
-            structure = newStructureLevel;
-        }
-        else
-            return new Promise((resolve, reject) => reject(null));
-    }
-    return new Promise(resolve => resolve(Object.keys(structure)));
-});
-
+import promisifyFS from "../../__mocks__/promisifyFS";
 
 test('getFolderFiles', async function(){
     let testRoutesCollector = new (RoutesCollector as any);
@@ -66,21 +9,70 @@ test('getFolderFiles', async function(){
     args = '/home/app/modules/';
     expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual([]);
     expect(promisifyFS.readdir).lastCalledWith(args);
-    args = '/home/app/modules/auth/controllers';
-    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual(['Index.ts', 'Something.ts']);
+    args = '/home/app/modules/auth/controllers/';
+    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual(
+        ['/home/app/modules/auth/controllers/Index.ts', '/home/app/modules/auth/controllers/Something.ts']);
     expect(promisifyFS.readdir).lastCalledWith(args);
     args = '/home/app/modules/routes/';
-    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual(['RootRoute.ts']);
+    expect(await testRoutesCollector.getFolderFiles(args)).toStrictEqual(['/home/app/modules/routes/RootRoute.ts']);
     expect(promisifyFS.readdir).lastCalledWith(args);
-
     expect(promisifyFS.readdir.mock.calls.length).toBe(4);
 });
 
-
-test('filterRoutesFolder', async function(){
+test('filterRoutesFolder', function(){
     let testRoutesCollector = new (RoutesCollector as any);
-    expect(await testRoutesCollector.filterRoutesFolder([])).toStrictEqual('');
-    expect(await testRoutesCollector.filterRoutesFolder(['routes'])).toStrictEqual('routes');
-    expect(await testRoutesCollector.filterRoutesFolder(['test', 'Routes'])).toStrictEqual('Routes');
-    expect(await testRoutesCollector.filterRoutesFolder(['Route'])).toStrictEqual('');
+    expect(testRoutesCollector.filterRoutesFolder([])).toStrictEqual('');
+    expect(testRoutesCollector.filterRoutesFolder(['routes'])).toStrictEqual('routes');
+    expect(testRoutesCollector.filterRoutesFolder(['test', 'Routes'])).toStrictEqual('Routes');
+    expect(testRoutesCollector.filterRoutesFolder(['Route'])).toStrictEqual('');
+});
+
+test('getInsidePaths', async function(){
+    let testRoutesCollector = new (RoutesCollector as any);
+    let args:Array<string> = [];
+    expect(await testRoutesCollector.getInsidePaths(args)).toStrictEqual([]);
+    expect(promisifyFS.readdir).not.toBeCalled();
+    args = ['/home/'];
+    expect(await testRoutesCollector.getInsidePaths(args)).toStrictEqual(['/home/app/']);
+    expect(promisifyFS.readdir).lastCalledWith(args[0]);
+    args = ['/home/app/modules/auth/'];
+    expect(await testRoutesCollector.getInsidePaths(['/home/app/modules/auth/'])).toStrictEqual([
+        '/home/app/modules/auth/controllers/',
+        '/home/app/modules/auth/models/',
+        '/home/app/modules/auth/routes/'
+    ]);
+    expect(promisifyFS.readdir).lastCalledWith(args[0]);
+    args = ['/home/app/modules/auth/', '/home/app/modules/some/'];
+    expect(await testRoutesCollector.getInsidePaths(args)).toStrictEqual([
+        '/home/app/modules/auth/controllers/',
+        '/home/app/modules/auth/models/',
+        '/home/app/modules/auth/routes/',
+        '/home/app/modules/some/controllers/',
+        '/home/app/modules/some/models/',
+    ]);
+    expect(promisifyFS.readdir.mock.calls[2]).toEqual([args[0]]);
+    expect(promisifyFS.readdir.mock.calls[3]).toEqual([args[1]]);
+    expect(promisifyFS.readdir.mock.calls.length).toBe(4);
+});
+
+test('routesFilesFinder', async function(){
+    let testRoutesCollector = new (RoutesCollector as any);
+    let args:Array<string> = [];
+    expect(await testRoutesCollector.routesFilesFinder(args)).toStrictEqual([]);
+    expect(promisifyFS.readdir).not.toBeCalled();
+
+    args = ['/home/'];
+    expect(await testRoutesCollector.routesFilesFinder(args)).toStrictEqual([
+        '/home/app/modules/routes/RootRoute.ts',
+        '/home/app/modules/auth/routes/AuthRoute.ts',
+        '/home/app/modules/auth/routes/UserRoutes.ts',
+    ]);
+    expect(promisifyFS.readdir.mock.calls.length).toBe(13);
+
+    args = ['/home/app/modules/auth/'];
+    expect(await testRoutesCollector.routesFilesFinder(args)).toStrictEqual([
+        '/home/app/modules/auth/routes/AuthRoute.ts',
+        '/home/app/modules/auth/routes/UserRoutes.ts',
+    ]);
+    expect(promisifyFS.readdir.mock.calls.length).toBe(18);
 });
