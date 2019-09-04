@@ -23,7 +23,7 @@
     "typescript": "^3.5.3"
   },
   "scripts": {
-    "start": "nodemon  --watch 'src/*/**' --watch 'app.ts' -e ts,tsx --exec ts-node ./src/app.ts",
+    "start": "nodemon  --watch 'src/*/**' --watch 'app.ts' -e ts,tsx --exec ts-node ./app.ts",
     "debug": "nodemon --inspect 'src/*/**' --inspect 'app.ts' -e ts,tsx --exec ts-node app.ts",
     "tsc": "tsc",
     "test": "jest"

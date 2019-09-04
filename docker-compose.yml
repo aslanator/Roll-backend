@@ -1,0 +1,16 @@
+version: "2"
+services:
+
+  node:
+    image: "node:12"
+    user: "node"
+    working_dir: /var/www/roll
+    environment:
+      - NODE_ENV=dev
+    volumes:
+      - ./:/var/www/roll
+    expose:
+      - "3000"
+    links:
+      - mongo
+    command: "npm start"
