@@ -1,24 +1,23 @@
 import RoutesCollector from './src/Main/RoutesCollector';
 import DB from './src/Main/DB';
-import Koa from 'koa';
-import Router from 'koa-router';
+import express from "express";
 import http from 'http';
+import * as core from "express-serve-static-core";
 
 
 const config = require(`./config.json`);
 
 class App {
 
-    private routes:Router.IMiddleware;
-    private koa:Koa;
-    private router:Router;
+    private app:core.Express;
 
     public async run(){
         await DB.connect();
-        this.koa = new Koa();
+        this.app = express();
         this.initRouter();
-        this.koa.listen(3000);
-
+        let port = 3000;
+        this.app.get('/', (req, res) => res.send('Hello World!'))
+        this.app.listen(port, () => console.log(`Example app listening on port ${port}!`))
     }
 
     private initRouter(){

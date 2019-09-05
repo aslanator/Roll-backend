@@ -1,9 +1,8 @@
-import Router from 'koa-router';
 import {readdir} from './Utils/PromisifyFS';
 
 export default class RoutesCollector {
 
-    private readonly routes:Router.IMiddleware;
+    private readonly routes:any;
     private static instance:RoutesCollector;
 
     private constructor() {}
