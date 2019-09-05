@@ -9,8 +9,16 @@ services:
       - NODE_ENV=dev
     volumes:
       - ./:/var/www/roll
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     links:
       - mongo
     command: "npm start"
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"

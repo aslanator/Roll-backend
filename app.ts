@@ -17,6 +17,8 @@ class App {
         await DB.connect();
         this.koa = new Koa();
         this.initRouter();
+        this.koa.listen(3000);
+
     }
 
     private initRouter(){
